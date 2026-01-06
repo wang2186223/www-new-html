@@ -48,6 +48,66 @@ class WebsiteBuilder:
         
         self.site_url = config.get('site_url', 'https://example.github.io')
         
+    def get_file_timestamps(self, file_path: Path) -> Dict[str, str]:
+        """获取文件的创建时间和修改时间"""
+        try:
+            stat = file_path.stat()
+            
+            # 创建时间（在Windows上是st_ctime，在Unix/Linux上通常也是st_ctime）
+            created_time = datetime.fromtimestamp(stat.st_ctime)
+            # 修改时间
+            modified_time = datetime.fromtimestamp(stat.st_mtime)
+            
+            # 格式化为ISO 8601格式（SEO友好）
+            return {
+                'created_iso': created_time.isoformat(),
+                'modified_iso': modified_time.isoformat(),
+                'created_readable': created_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'modified_readable': modified_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'created_date': created_time.strftime('%Y-%m-%d'),
+                'modified_date': modified_time.strftime('%Y-%m-%d')
+            }
+        except Exception as e:
+            # 如果无法获取文件时间，使用当前时间
+            current_time = datetime.now()
+            return {
+                'created_iso': current_time.isoformat(),
+                'modified_iso': current_time.isoformat(),
+                'created_readable': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'modified_readable': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'created_date': current_time.strftime('%Y-%m-%d'),
+                'modified_date': current_time.strftime('%Y-%m-%d')
+            }
+    
+    def get_novel_timestamps(self, novel_data: Dict) -> Dict[str, str]:
+        """获取小说相关的时间戳"""
+        # 尝试从小说的源文件获取时间
+        novel_slug = novel_data.get('slug', '')
+        source_novel_path = self.source_path / novel_slug
+        
+        # 查找主要文本文件
+        main_file = None
+        if source_novel_path.exists():
+            for possible_file in ['书籍正文.txt', '正文.txt', 'content.txt']:
+                potential_path = source_novel_path / possible_file
+                if potential_path.exists():
+                    main_file = potential_path
+                    break
+        
+        if main_file and main_file.exists():
+            return self.get_file_timestamps(main_file)
+        else:
+            # 如果找不到源文件，使用当前时间
+            current_time = datetime.now()
+            return {
+                'created_iso': current_time.isoformat(),
+                'modified_iso': current_time.isoformat(),
+                'created_readable': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'modified_readable': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'created_date': current_time.strftime('%Y-%m-%d'),
+                'modified_date': current_time.strftime('%Y-%m-%d')
+            }
+        
     def build_website(self, force_rebuild: bool = False, novel_filter: Optional[str] = None):
         """构建完整网站"""
         print("开始构建网站...")
@@ -132,7 +192,11 @@ class WebsiteBuilder:
         # 1. 生成小说详情页
         self.build_novel_detail_page(novel_data, novel_dir)
         
-        # 2. 生成所有章节页面
+        # 2. 生成所有章节页面（AB版本：广告版 + 纯净版）
+        chapter_count = len(novel_data.get('chapters', []))
+        print(f"  ├─ 生成章节页面: {chapter_count} 章")
+        print(f"  ├─ AB版本模式: 每章生成2个文件（广告版 + 纯净版）")
+        print(f"  └─ 预计生成文件: {chapter_count * 2} 个章节文件")
         self.build_chapter_pages(novel_data, novel_dir)
         
     def build_novel_detail_page(self, novel_data: Dict, novel_dir: Path):
@@ -155,6 +219,9 @@ class WebsiteBuilder:
         # 处理封面URL
         cover_url = self.get_cover_url(novel_data)
         
+        # 获取时间戳信息
+        timestamps = self.get_novel_timestamps(novel_data)
+        
         # 渲染页面
         html_content = template.render(
             novel={
@@ -171,6 +238,7 @@ class WebsiteBuilder:
                 'chapters': chapters,
                 'url': f"/novels/{novel_data['slug']}/"
             },
+            timestamps=timestamps,
             canonical_url=f"{self.site_url}/novels/{novel_data['slug']}/",
             site_url=self.site_url
         )
@@ -181,8 +249,10 @@ class WebsiteBuilder:
             f.write(html_content)
             
     def build_chapter_pages(self, novel_data: Dict, novel_dir: Path):
-        """生成章节页面"""
-        template = self.env.get_template('chapter.html')
+        """生成章节页面（AB版本：同时生成广告版和纯净版）"""
+        # 加载两个模板
+        template_ads = self.env.get_template('chapter.html')  # 广告版本
+        template_clean = self.env.get_template('chapter-clean.html')  # 纯净版本
         chapters = novel_data['chapters']
         
         for i, chapter in enumerate(chapters):
@@ -212,17 +282,20 @@ class WebsiteBuilder:
                     'title': ch['title'],
                     'url': f"/novels/{novel_data['slug']}/chapter-{ch['number']}"
                 })
-                
-            # 渲染页面
-            html_content = template.render(
-                chapter={
+            
+            # 获取时间戳信息
+            timestamps = self.get_novel_timestamps(novel_data)
+            
+            # 准备通用渲染数据
+            render_data = {
+                'chapter': {
                     'number': chapter['number'],
                     'title': chapter['title'],
                     'content': chapter['content'],
                     'word_count': chapter.get('word_count', 0),
                     'publish_date': chapter.get('publish_date', '')
                 },
-                novel={
+                'novel': {
                     'title': novel_data['title'],
                     'author': novel_data['author'],
                     'cover_url': self.get_cover_url(novel_data),
@@ -230,16 +303,28 @@ class WebsiteBuilder:
                     'chapters': all_chapters,
                     'tags': novel_data['tags']
                 },
-                prev_chapter=prev_chapter,
-                next_chapter=next_chapter,
-                canonical_url=f"{self.site_url}/novels/{novel_data['slug']}/chapter-{chapter['number']}.html",
-                site_url=self.site_url
-            )
+                'timestamps': timestamps,
+                'prev_chapter': prev_chapter,
+                'next_chapter': next_chapter,
+                'canonical_url': f"{self.site_url}/novels/{novel_data['slug']}/chapter-{chapter['number']}.html",
+                'site_url': self.site_url
+            }
+                
+            # 渲染并保存广告版本（chapter.html）
+            html_content_ads = template_ads.render(**render_data)
+            output_file_ads = novel_dir / f"chapter-{chapter['number']}.html"
+            with open(output_file_ads, 'w', encoding='utf-8') as f:
+                f.write(html_content_ads)
             
-            # 保存文件
-            output_file = novel_dir / f"chapter-{chapter['number']}.html"
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(html_content)
+            # 渲染并保存纯净版本（chapter-clean.html）
+            html_content_clean = template_clean.render(**render_data)
+            output_file_clean = novel_dir / f"chapter-{chapter['number']}-clean.html"
+            with open(output_file_clean, 'w', encoding='utf-8') as f:
+                f.write(html_content_clean)
+            
+            # 显示进度（每10章或最后一章显示一次）
+            if (i + 1) % 10 == 0 or (i + 1) == len(chapters):
+                print(f"     进度: {i + 1}/{len(chapters)} 章 (已生成 {(i + 1) * 2} 个文件)")
                 
     def build_homepage(self, novels: Dict):
         """生成首页"""
@@ -275,6 +360,17 @@ class WebsiteBuilder:
         # 准备所有小说数据用于推荐区域
         all_novels = self.prepare_novel_cards(novel_list)
         
+        # 获取网站时间戳（使用当前时间）
+        current_time = datetime.now()
+        site_timestamps = {
+            'created_iso': current_time.isoformat(),
+            'modified_iso': current_time.isoformat(),
+            'created_readable': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'modified_readable': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'created_date': current_time.strftime('%Y-%m-%d'),
+            'modified_date': current_time.strftime('%Y-%m-%d')
+        }
+        
         # 渲染首页
         html_content = template.render(
             featured_novels=featured_novels,
@@ -283,6 +379,7 @@ class WebsiteBuilder:
             recommended_novels=recommended_novels,
             all_novels=all_novels,
             categories=categories,
+            timestamps=site_timestamps,
             canonical_url=f"{self.site_url}/",
             site_url=self.site_url
         )
@@ -369,22 +466,23 @@ class WebsiteBuilder:
                             print(f"复制封面失败 {novel_data['title']}: {e}")
                             
     def generate_sitemap(self, novels: Dict):
-        """生成站点地图"""
+        """生成站点地图 - 优化版本：每本小说只包含详情页和前10个章节"""
         urlset = ET.Element('urlset')
         urlset.set('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
         
         # 添加首页
         self.add_url_to_sitemap(urlset, '', priority='1.0', changefreq='daily')
         
-        # 添加小说详情页和章节页
+        # 添加小说详情页和前10个章节页
         for novel_data in novels.values():
             novel_url = f"novels/{novel_data['slug']}/"
             
             # 小说详情页
             self.add_url_to_sitemap(urlset, novel_url, priority='0.8', changefreq='weekly')
             
-            # 章节页面
-            for chapter in novel_data['chapters']:
+            # 只添加前10个章节到sitemap中，减少文件大小
+            chapters_to_include = novel_data['chapters'][:10]  # 只取前10个章节
+            for chapter in chapters_to_include:
                 chapter_url = f"novels/{novel_data['slug']}/chapter-{chapter['number']}.html"
                 self.add_url_to_sitemap(urlset, chapter_url, priority='0.6', changefreq='monthly')
                 
@@ -462,7 +560,7 @@ def main():
     args = parser.parse_args()
     
     # 读取配置文件
-    site_url = 'https://www.newreadnovel.com'  # 默认正确域名
+    site_url = 'https://re.cankalp.com'  # 默认正确域名
     config_file = 'config.json'
     if os.path.exists(config_file):
         try:

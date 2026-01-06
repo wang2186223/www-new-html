@@ -1,11 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset=    // Natural 72-hour event    // Track PageView with 72-hour prevention
+    if (shouldTrackEvent('PageView_Novel')) {
+        fbq('track', 'PageView');
+        console.log('Facebook事件已发送: PageView (小说介绍页浏览)');
+    } else {
+        console.log('Facebook事件已跳过: PageView_Novel (本72小时内已发送)');
+    }ng prevention (resets every 3 days)
+    function shouldTrackEvent(eventName) {
+        const now = new Date();
+        const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+        const currentPeriod = Math.floor(now.getTime() / (3 * 24 * 60 * 60 * 1000));
+        const storageKey = `fb_event_${eventName}`;
+        const lastTrackedPeriod = localStorage.getItem(storageKey);
+        
+        if (!lastTrackedPeriod || parseInt(lastTrackedPeriod) !== currentPeriod) {
+            localStorage.setItem(storageKey, currentPeriod.toString());
+            return true;
+        }
+        
+        return false;
+    }meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if novel.title %}{{ novel.title }} - NovelVibe{% else %}Book Details - NovelVibe{% endif %}</title>
     <meta name="description" content="{% if novel.description %}{{ novel.description }}{% else %}Read free werewolf romance novels on NovelVibe{% endif %}">
     <meta name="keywords" content="{% if novel.tags %}{{ novel.tags|join(', ') }}{% else %}werewolf, romance, free novels{% endif %}">
+    
+    <!-- Time Meta Tags for SEO -->
+    {% if timestamps %}
+    <meta property="article:published_time" content="{{ timestamps.created_iso }}">
+    <meta property="article:modified_time" content="{{ timestamps.modified_iso }}">
+    <meta name="date" content="{{ timestamps.modified_date }}">
+    <meta name="last-modified" content="{{ timestamps.modified_readable }}">
+    {% endif %}
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="{% if novel.title %}{{ novel.title }}{% else %}Book Details{% endif %}">
@@ -23,17 +50,142 @@
     <link rel="canonical" href="{{ canonical_url }}">
     
     <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6BKGBPW0W"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YKK2QRZ5GC"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-B6BKGBPW0W');
+      gtag('config', 'G-YKK2QRZ5GC');
     </script>
     
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3785399647875281"
-         crossorigin="anonymous"></script>
+    <!-- Google AdSense
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8873012348232644"
+         crossorigin="anonymous"></script> -->
+    
+
+
+    <!-- Facebook Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+
+    fbq('init', '835106315764533');
+    
+    // Natural 72-hour event tracking prevention (resets every 3 days)
+    function shouldTrackEvent(eventName) {
+        const now = new Date();
+        const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+        const currentPeriod = Math.floor(now.getTime() / (3 * 24 * 60 * 60 * 1000));
+        const storageKey = `fb_event_${eventName}`;
+        const lastTrackedPeriod = localStorage.getItem(storageKey);
+        
+        if (!lastTrackedPeriod || parseInt(lastTrackedPeriod) !== currentPeriod) {
+            localStorage.setItem(storageKey, currentPeriod.toString());
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Track PageView with 24-hour prevention
+    if (shouldTrackEvent('PageView_Novel')) {
+        fbq('track', 'PageView');
+        console.log('Facebook事件已发送: PageView (小说介绍页浏览)');
+    } else {
+        console.log('Facebook事件已跳过: PageView_Novel (今日已发送)');
+    }
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=835106315764533&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Facebook Pixel Code -->
+    
+    <!-- 页面访问统计代码 -->
+    <script>
+    // 页面访问数据收集
+    function sendPageVisit() {
+        // 先获取用户IP地址
+        getUserIP().then(userIP => {
+            const data = {
+                page: window.location.href,
+                userAgent: navigator.userAgent,
+                referrer: document.referrer || 'direct',
+                userIP: userIP
+            };
+            
+            // 发送数据到 Google Apps Script
+            fetch('https://script.google.com/macros/s/AKfycbymMsHdDPh_kQsfqZ2zORfFYkEX8w6BIUwZ23DbF29f481fo0hgpxoT-Fwpp0VMIjZ_/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            }).catch(error => {
+                console.log('Analytics error:', error);
+            });
+        }).catch(error => {
+            // 如果获取IP失败，仍发送其他数据
+            const data = {
+                page: window.location.href,
+                userAgent: navigator.userAgent,
+                referrer: document.referrer || 'direct',
+                userIP: 'Unknown'
+            };
+            
+            fetch('https://script.google.com/macros/s/AKfycbymMsHdDPh_kQsfqZ2zORfFYkEX8w6BIUwZ23DbF29f481fo0hgpxoT-Fwpp0VMIjZ_/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            }).catch(error => {
+                console.log('Analytics error:', error);
+            });
+        });
+    }
+    
+    // 获取用户IP地址
+    async function getUserIP() {
+        try {
+            // 方法1：使用免费的IP API
+            const response = await fetch('https://api.ipify.org?format=json');
+            const ipData = await response.json();
+            return ipData.ip;
+        } catch (error1) {
+            try {
+                // 方法2：备用IP API
+                const response = await fetch('https://httpbin.org/ip');
+                const ipData = await response.json();
+                return ipData.origin.split(',')[0].trim();
+            } catch (error2) {
+                try {
+                    // 方法3：第三个备用API
+                    const response = await fetch('https://jsonip.com');
+                    const ipData = await response.json();
+                    return ipData.ip;
+                } catch (error3) {
+                    console.log('获取IP失败，使用Unknown');
+                    return 'Unknown';
+                }
+            }
+        }
+    }
+    
+    // 页面加载完成后发送访问数据
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', sendPageVisit);
+    } else {
+        sendPageVisit();
+    }
+    </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -193,6 +345,82 @@
             transform: translateY(-2px);
         }
         
+        /* 阅读历史记录样式 */
+        .reading-history {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 15px;
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .history-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .history-header i {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .history-info {
+            margin-bottom: 15px;
+        }
+        
+        .last-read-chapter {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .reading-progress {
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .last-read-time {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        #continue-reading-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        #continue-reading-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
         /* 书籍简介 */
         .book-description {
             background: white;
@@ -266,6 +494,7 @@
             justify-content: space-between;
             align-items: center;
             transition: all 0.2s ease;
+            position: relative;
         }
         
         .chapter-item:hover {
@@ -274,6 +503,46 @@
         
         .chapter-item:last-child {
             border-bottom: none;
+        }
+        
+        .chapter-item.read {
+            background: rgba(0, 113, 227, 0.05);
+        }
+        
+        .chapter-item.current {
+            background: rgba(0, 113, 227, 0.1);
+            border-left: 4px solid #0071e3;
+        }
+        
+        .chapter-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        
+        .status-icon.read {
+            background: #34c759;
+            color: white;
+        }
+        
+        .status-icon.current {
+            background: #0071e3;
+            color: white;
+        }
+        
+        .status-icon.unread {
+            background: #f0f0f0;
+            color: #86868b;
         }
         
         .chapter-title {
@@ -384,6 +653,42 @@
             }
         }
     </style>
+    
+    <!-- Schema.org Structured Data for Book -->
+    {% if timestamps %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Book",
+        "name": "{{ novel.title }}",
+        "author": {
+            "@type": "Person",
+            "name": "{{ novel.author }}"
+        },
+        "description": "{{ novel.description }}",
+        "genre": "{{ novel.genres|join(', ') if novel.genres else 'Romance, Fiction' }}",
+        "url": "{{ canonical_url }}",
+        {% if novel.cover_url %}
+        "image": "{{ novel.cover_url }}",
+        {% endif %}
+        "datePublished": "{{ timestamps.created_iso }}",
+        "dateModified": "{{ timestamps.modified_iso }}",
+        "publisher": {
+            "@type": "Organization",
+            "name": "NovelVibe",
+            "url": "{{ site_url }}"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ novel.rating if novel.rating else '4.5' }}",
+            "bestRating": "5",
+            "worstRating": "1",
+            "ratingCount": "100"
+        },
+        "numberOfPages": "{{ novel.total_chapters * 10 if novel.total_chapters else '100' }}"
+    }
+    </script>
+    {% endif %}
 </head>
 <body>
     <!-- 顶部导航 -->
@@ -439,7 +744,24 @@
                 
                 <div class="action-buttons">
                     {% if novel.chapters and novel.chapters|length > 0 %}
-                    <a href="{{ novel.chapters[0].url }}" class="btn btn-primary">Start Reading</a>
+                    <a href="{{ novel.chapters[0].url }}" class="btn btn-primary" id="start-reading-btn">Start Reading</a>
+                    <div class="reading-history" id="reading-history" style="display: none;">
+                        <div class="history-header">
+                            <i class="fas fa-history"></i>
+                            <span>Continue Reading</span>
+                        </div>
+                        <div class="history-info">
+                            <div class="last-read-chapter">Chapter <span id="last-chapter-num">1</span></div>
+                            <div class="reading-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                                <span class="progress-text" id="progress-text">0% completed</span>
+                            </div>
+                            <div class="last-read-time">Last read: <span id="last-read-time">Never</span></div>
+                        </div>
+                        <a href="#" class="btn btn-primary" id="continue-reading-btn">Continue Reading</a>
+                    </div>
                     {% else %}
                     <button class="btn btn-primary" disabled>Coming Soon</button>
                     {% endif %}
@@ -474,9 +796,14 @@
             
             <ul class="chapters-list">
                 {% for chapter in novel.chapters %}
-                <li class="chapter-item">
+                <li class="chapter-item" data-chapter="{{ chapter.number }}">
                     <a href="{{ chapter.url }}" class="chapter-link">
-                        <span class="chapter-title">{{ chapter.title }}</span>
+                        <div class="chapter-status">
+                            <div class="status-icon unread" id="status-{{ chapter.number }}">
+                                <i class="fas fa-circle" style="font-size: 6px;"></i>
+                            </div>
+                            <span class="chapter-title">{{ chapter.title }}</span>
+                        </div>
                         {% if chapter.publish_date %}
                         <span class="chapter-date">{{ chapter.publish_date }}</span>
                         {% endif %}
@@ -507,24 +834,266 @@
     </div>
 
     <script>
-        // 简单的交互效果
+        // ===== Facebook Tracking Parameters Preservation System =====
+        
+        const TRACKING_PARAMS = [
+            'fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 
+            'utm_term', 'utm_content', 'utm_id', 'gclid', 'msclkid', 'ttclid'
+        ];
+        
+        function extractTrackingParams(url) {
+            const urlObj = new URL(url, window.location.origin);
+            const params = {};
+            let hasParams = false;
+            
+            TRACKING_PARAMS.forEach(param => {
+                const value = urlObj.searchParams.get(param);
+                if (value) {
+                    params[param] = value;
+                    hasParams = true;
+                }
+            });
+            
+            return hasParams ? params : null;
+        }
+        
+        function saveCurrentTrackingParams() {
+            const currentParams = extractTrackingParams(window.location.href);
+            
+            if (currentParams) {
+                localStorage.setItem('trackingParams', JSON.stringify(currentParams));
+                localStorage.setItem('trackingParamsTimestamp', Date.now().toString());
+                console.log('📊 [小说页] 保存新的追踪参数:', currentParams);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function getStoredTrackingParams() {
+            try {
+                const paramsStr = localStorage.getItem('trackingParams');
+                const timestamp = localStorage.getItem('trackingParamsTimestamp');
+                
+                if (!paramsStr || !timestamp) return null;
+                
+                const age = Date.now() - parseInt(timestamp);
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+                
+                if (age > twentyFourHours) {
+                    localStorage.removeItem('trackingParams');
+                    localStorage.removeItem('trackingParamsTimestamp');
+                    return null;
+                }
+                
+                return JSON.parse(paramsStr);
+            } catch (error) {
+                return null;
+            }
+        }
+        
+        function addTrackingParams(url) {
+            try {
+                const urlObj = new URL(url, window.location.origin);
+                
+                const hasExistingParams = TRACKING_PARAMS.some(param => 
+                    urlObj.searchParams.has(param)
+                );
+                
+                if (hasExistingParams) {
+                    return url;
+                }
+                
+                const storedParams = getStoredTrackingParams();
+                
+                if (storedParams) {
+                    Object.keys(storedParams).forEach(key => {
+                        urlObj.searchParams.set(key, storedParams[key]);
+                    });
+                    return urlObj.toString();
+                }
+                
+                return url;
+            } catch (error) {
+                return url;
+            }
+        }
+        
+        function initTrackingSystem() {
+            saveCurrentTrackingParams();
+            
+            // 为所有章节链接添加追踪参数
+            document.querySelectorAll('a[href*="/chapter-"]').forEach(link => {
+                if (link.href) {
+                    const originalHref = link.href;
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.location.href = addTrackingParams(originalHref);
+                    });
+                }
+            });
+            
+            console.log('📊 [小说页] 追踪参数系统已初始化');
+        }
+        
+        document.addEventListener('DOMContentLoaded', initTrackingSystem);
+        
+        // 阅读历史记录管理
         document.addEventListener('DOMContentLoaded', function() {
+            const novelTitle = '{{ novel.title }}';
+            const totalChapters = {{ novel.chapters|length if novel.chapters else 0 }};
+            
+            // 加载并显示阅读历史
+            loadReadingHistory();
+            
+            function loadReadingHistory() {
+                const history = JSON.parse(localStorage.getItem('readingHistory') || '[]');
+                const currentNovelHistory = history.find(item => item.title === novelTitle);
+                
+                if (currentNovelHistory && currentNovelHistory.currentChapter > 0) {
+                    showReadingHistory(currentNovelHistory);
+                    updateChapterStatuses(currentNovelHistory);
+                }
+            }
+            
+            function showReadingHistory(historyData) {
+                const startReadingBtn = document.getElementById('start-reading-btn');
+                const readingHistory = document.getElementById('reading-history');
+                const continueBtn = document.getElementById('continue-reading-btn');
+                
+                if (startReadingBtn && readingHistory) {
+                    startReadingBtn.style.display = 'none';
+                    readingHistory.style.display = 'block';
+                    
+                    // 更新历史信息
+                    document.getElementById('last-chapter-num').textContent = historyData.currentChapter;
+                    
+                    // 计算阅读进度
+                    const progress = Math.round((historyData.currentChapter / totalChapters) * 100);
+                    document.getElementById('progress-fill').style.width = progress + '%';
+                    document.getElementById('progress-text').textContent = progress + '% completed';
+                    
+                    // 格式化最后阅读时间
+                    const lastReadTime = new Date(historyData.lastRead);
+                    const now = new Date();
+                    const timeDiff = now - lastReadTime;
+                    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                    const days = Math.floor(hours / 24);
+                    
+                    let timeText;
+                    if (days > 0) {
+                        timeText = days === 1 ? '1 day ago' : `${days} days ago`;
+                    } else if (hours > 0) {
+                        timeText = hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+                    } else {
+                        timeText = 'Just now';
+                    }
+                    
+                    document.getElementById('last-read-time').textContent = timeText;
+                    
+                    // 设置继续阅读按钮链接
+                    const chapterUrl = findChapterUrl(historyData.currentChapter);
+                    if (chapterUrl) {
+                        continueBtn.href = chapterUrl;
+                    }
+                }
+            }
+            
+            function updateChapterStatuses(historyData) {
+                const currentChapter = historyData.currentChapter;
+                
+                // 更新所有章节的状态
+                for (let i = 1; i <= totalChapters; i++) {
+                    const statusIcon = document.getElementById(`status-${i}`);
+                    const chapterItem = document.querySelector(`[data-chapter="${i}"]`);
+                    
+                    if (statusIcon && chapterItem) {
+                        if (i < currentChapter) {
+                            // 已读章节
+                            statusIcon.className = 'status-icon read';
+                            statusIcon.innerHTML = '<i class="fas fa-check"></i>';
+                            chapterItem.classList.add('read');
+                        } else if (i === currentChapter) {
+                            // 当前章节
+                            statusIcon.className = 'status-icon current';
+                            statusIcon.innerHTML = '<i class="fas fa-play" style="font-size: 8px;"></i>';
+                            chapterItem.classList.add('current');
+                        } else {
+                            // 未读章节
+                            statusIcon.className = 'status-icon unread';
+                            statusIcon.innerHTML = '<i class="fas fa-circle" style="font-size: 6px;"></i>';
+                        }
+                    }
+                }
+            }
+            
+            function findChapterUrl(chapterNumber) {
+                const chapterLinks = document.querySelectorAll('.chapter-link');
+                for (let link of chapterLinks) {
+                    const chapterItem = link.closest('[data-chapter]');
+                    if (chapterItem && parseInt(chapterItem.dataset.chapter) === chapterNumber) {
+                        return link.href;
+                    }
+                }
+                return null;
+            }
+            
             // 过滤按钮切换
             const filterButtons = document.querySelectorAll('.filter-btn');
             filterButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     filterButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
+                    
+                    const filterType = this.textContent.trim();
+                    filterChapters(filterType);
                 });
             });
+            
+            function filterChapters(filterType) {
+                const chapterItems = document.querySelectorAll('.chapter-item');
+                
+                chapterItems.forEach(item => {
+                    let shouldShow = true;
+                    
+                    switch(filterType) {
+                        case 'Free':
+                            // 所有章节都是免费的
+                            shouldShow = true;
+                            break;
+                        case 'Latest':
+                            // 显示最新的10章
+                            const chapterNum = parseInt(item.dataset.chapter);
+                            shouldShow = chapterNum > totalChapters - 10;
+                            break;
+                        case 'All':
+                        default:
+                            shouldShow = true;
+                            break;
+                    }
+                    
+                    item.style.display = shouldShow ? 'flex' : 'none';
+                });
+            }
             
             // 章节点击效果
             const chapterItems = document.querySelectorAll('.chapter-item a');
             chapterItems.forEach(item => {
                 item.addEventListener('click', function(e) {
-                    // 让链接正常跳转，只是添加一些日志
-                    console.log('Opening chapter: ' + this.querySelector('.chapter-title').textContent);
-                    // 不要阻止默认行为，让链接正常工作
+                    // 记录用户点击了哪一章
+                    const chapterItem = this.closest('[data-chapter]');
+                    if (chapterItem) {
+                        const chapterNumber = parseInt(chapterItem.dataset.chapter);
+                        console.log(`User clicked on chapter ${chapterNumber}: ${this.querySelector('.chapter-title').textContent}`);
+                        
+                        // 可以在这里添加分析跟踪代码
+                        if (typeof gtag !== 'undefined') {
+                            gtag('event', 'chapter_click', {
+                                'novel_title': novelTitle,
+                                'chapter_number': chapterNumber
+                            });
+                        }
+                    }
                 });
             });
         });

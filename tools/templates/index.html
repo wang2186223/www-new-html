@@ -7,6 +7,14 @@
     <meta name="description" content="{% if page_description %}{{ page_description }}{% else %}Discover thousands of free werewolf romance novels. Read passionate alpha stories, mate bonds, and pack adventures. Perfect for women who love paranormal romance.{% endif %}">
     <meta name="keywords" content="free werewolf novels, alpha romance, mate bond stories, paranormal romance, werewolf fiction, free books for women">
     
+    <!-- Time Meta Tags for SEO -->
+    {% if timestamps %}
+    <meta property="article:published_time" content="{{ timestamps.created_iso }}">
+    <meta property="article:modified_time" content="{{ timestamps.modified_iso }}">
+    <meta name="date" content="{{ timestamps.modified_date }}">
+    <meta name="last-modified" content="{{ timestamps.modified_readable }}">
+    {% endif %}
+    
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="{% if page_title %}{{ page_title }}{% else %}NovelVibe - Free Novels for Women{% endif %}">
     <meta property="og:description" content="{% if page_description %}{{ page_description }}{% else %}Discover thousands of free werewolf romance novels{% endif %}">
@@ -23,17 +31,143 @@
     <link rel="canonical" href="{{ canonical_url }}">
     
     <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6BKGBPW0W"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YKK2QRZ5GC"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-B6BKGBPW0W');
+      gtag('config', 'G-YKK2QRZ5GC');
     </script>
     
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3785399647875281"
+    <!-- Google AdSense
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8873012348232644"
          crossorigin="anonymous"></script>
+     -->
+
+
+
+    <!-- Facebook Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+
+    fbq('init', '835106315764533');
+    
+    // Natural 72-hour event tracking prevention (resets every 3 days)
+    function shouldTrackEvent(eventName) {
+        const now = new Date();
+        const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+        const currentPeriod = Math.floor(now.getTime() / (3 * 24 * 60 * 60 * 1000));
+        const storageKey = `fb_event_${eventName}`;
+        const lastTrackedPeriod = localStorage.getItem(storageKey);
+        
+        if (!lastTrackedPeriod || parseInt(lastTrackedPeriod) !== currentPeriod) {
+            localStorage.setItem(storageKey, currentPeriod.toString());
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Track PageView with 72-hour prevention
+    if (shouldTrackEvent('PageView_Index')) {
+        fbq('track', 'PageView');
+        console.log('Facebook事件已发送: PageView (索引页浏览)');
+    } else {
+        console.log('Facebook事件已跳过: PageView_Index (本72小时内已发送)');
+    }
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=835106315764533&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Facebook Pixel Code -->
+    
+    <!-- 页面访问统计代码 -->
+    <script>
+    // 页面访问数据收集
+    function sendPageVisit() {
+        // 先获取用户IP地址
+        getUserIP().then(userIP => {
+            const data = {
+                page: window.location.href,
+                userAgent: navigator.userAgent,
+                referrer: document.referrer || 'direct',
+                userIP: userIP
+            };
+            
+            // 发送数据到 Google Apps Script
+            fetch('https://script.google.com/macros/s/AKfycbymMsHdDPh_kQsfqZ2zORfFYkEX8w6BIUwZ23DbF29f481fo0hgpxoT-Fwpp0VMIjZ_/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            }).catch(error => {
+                console.log('Analytics error:', error);
+            });
+        }).catch(error => {
+            // 如果获取IP失败，仍发送其他数据
+            const data = {
+                page: window.location.href,
+                userAgent: navigator.userAgent,
+                referrer: document.referrer || 'direct',
+                userIP: 'Unknown'
+            };
+            
+            fetch('https://script.google.com/macros/s/AKfycbymMsHdDPh_kQsfqZ2zORfFYkEX8w6BIUwZ23DbF29f481fo0hgpxoT-Fwpp0VMIjZ_/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            }).catch(error => {
+                console.log('Analytics error:', error);
+            });
+        });
+    }
+    
+    // 获取用户IP地址
+    async function getUserIP() {
+        try {
+            // 方法1：使用免费的IP API
+            const response = await fetch('https://api.ipify.org?format=json');
+            const ipData = await response.json();
+            return ipData.ip;
+        } catch (error1) {
+            try {
+                // 方法2：备用IP API
+                const response = await fetch('https://httpbin.org/ip');
+                const ipData = await response.json();
+                return ipData.origin.split(',')[0].trim();
+            } catch (error2) {
+                try {
+                    // 方法3：第三个备用API
+                    const response = await fetch('https://jsonip.com');
+                    const ipData = await response.json();
+                    return ipData.ip;
+                } catch (error3) {
+                    console.log('获取IP失败，使用Unknown');
+                    return 'Unknown';
+                }
+            }
+        }
+    }
+    
+    // 页面加载完成后发送访问数据
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', sendPageVisit);
+    } else {
+        sendPageVisit();
+    }
+    </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -777,6 +911,111 @@
     </footer>
 
     <script>
+        // ===== Facebook Tracking Parameters Preservation System =====
+        
+        // Facebook 和其他渠道的追踪参数列表
+        const TRACKING_PARAMS = [
+            'fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 
+            'utm_term', 'utm_content', 'utm_id', 'gclid', 'msclkid', 'ttclid'
+        ];
+        
+        function extractTrackingParams(url) {
+            const urlObj = new URL(url, window.location.origin);
+            const params = {};
+            let hasParams = false;
+            
+            TRACKING_PARAMS.forEach(param => {
+                const value = urlObj.searchParams.get(param);
+                if (value) {
+                    params[param] = value;
+                    hasParams = true;
+                }
+            });
+            
+            return hasParams ? params : null;
+        }
+        
+        function saveCurrentTrackingParams() {
+            const currentParams = extractTrackingParams(window.location.href);
+            
+            if (currentParams) {
+                localStorage.setItem('trackingParams', JSON.stringify(currentParams));
+                localStorage.setItem('trackingParamsTimestamp', Date.now().toString());
+                console.log('📊 [首页] 保存新的追踪参数:', currentParams);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function getStoredTrackingParams() {
+            try {
+                const paramsStr = localStorage.getItem('trackingParams');
+                const timestamp = localStorage.getItem('trackingParamsTimestamp');
+                
+                if (!paramsStr || !timestamp) return null;
+                
+                const age = Date.now() - parseInt(timestamp);
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+                
+                if (age > twentyFourHours) {
+                    localStorage.removeItem('trackingParams');
+                    localStorage.removeItem('trackingParamsTimestamp');
+                    return null;
+                }
+                
+                return JSON.parse(paramsStr);
+            } catch (error) {
+                return null;
+            }
+        }
+        
+        function addTrackingParams(url) {
+            try {
+                const urlObj = new URL(url, window.location.origin);
+                
+                const hasExistingParams = TRACKING_PARAMS.some(param => 
+                    urlObj.searchParams.has(param)
+                );
+                
+                if (hasExistingParams) {
+                    return url;
+                }
+                
+                const storedParams = getStoredTrackingParams();
+                
+                if (storedParams) {
+                    Object.keys(storedParams).forEach(key => {
+                        urlObj.searchParams.set(key, storedParams[key]);
+                    });
+                    return urlObj.toString();
+                }
+                
+                return url;
+            } catch (error) {
+                return url;
+            }
+        }
+        
+        function initTrackingSystem() {
+            saveCurrentTrackingParams();
+            
+            // 为所有小说链接添加追踪参数
+            document.querySelectorAll('a[href*="/novels/"]').forEach(link => {
+                if (link.href) {
+                    const originalHref = link.href;
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.location.href = addTrackingParams(originalHref);
+                    });
+                }
+            });
+            
+            console.log('📊 [首页] 追踪参数系统已初始化');
+        }
+        
+        document.addEventListener('DOMContentLoaded', initTrackingSystem);
+        
         // Simulate loading effect
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.novel-card');
